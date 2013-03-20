@@ -114,10 +114,10 @@ class GoogleMapAPI
 	/**
 	 * Set the useClusterer parameter (optimization to display a lot of marker)
 	 *
-	 * @param boolean    $useClusterer         use cluster or not
-	 * @param int        $gridSize             grid size (The grid size of a cluster in pixel.Each cluster will be a square.If you want the algorithm to run faster, you can set this value larger.The default value is 100.)
-	 * @param int        $maxZoom              maxZoom (The max zoom level monitored by a marker cluster.If not given, the marker cluster assumes the maximum map zoom level.When maxZoom is reached or exceeded all markers will be shown without cluster.)
-	 * @param string     $clustererLibraryPath clustererLibraryPath
+	 * @param boolean $useClusterer         use cluster or not
+	 * @param int     $gridSize             grid size (The grid size of a cluster in pixel.Each cluster will be a square.If you want the algorithm to run faster, you can set this value larger.The default value is 100.)
+	 * @param int     $maxZoom              maxZoom (The max zoom level monitored by a marker cluster.If not given, the marker cluster assumes the maximum map zoom level.When maxZoom is reached or exceeded all markers will be shown without cluster.)
+	 * @param string  $clustererLibraryPath clustererLibraryPath
 	 *
 	 * @return void
 	 */
@@ -331,8 +331,6 @@ class GoogleMapAPI
 	 * @param string $url the url
 	 *
 	 * @return string the html code
-	 *
-	 * @todo add proxy settings
 	 */
 	public function getContent($url) {
 		$curl = curl_init();
@@ -346,21 +344,6 @@ class GoogleMapAPI
 	}
 
 	/**
-	 * Remove accentued characters
-	 *
-	 * @param string $text          The string to treat
-	 * @param string $replaceBy     The replacement character
-	 * @return string
-	 */
-	public function withoutSpecialChars($text, $replaceBy = '_') {
-		$accents = 'ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïðòóôõöùúûüýÿ';
-		$sansAccents = 'AAAAAACEEEEIIIIOOOOOUUUUYaaaaaaceeeeiiiioooooouuuuyy';
-		$text = strtr($text, $accents, $sansAccents);
-		$text = preg_replace('/([^.a-z0-9]+)/i', $replaceBy, $text);
-		return $text;
-	}
-
-	/**
 	 * Geocoding an address (address -> lat,lng)
 	 *
 	 * @param string $address an address
@@ -368,8 +351,7 @@ class GoogleMapAPI
 	 * @return array array with precision, lat & lng
 	 */
 	public function geocoding($address) {
-		$encodeAddress = urlencode($this->withoutSpecialChars($address));
-		$url = 'http://maps.google.com/maps/geo?q=' . $encodeAddress . '&output=csv';
+		$url = 'http://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&sensor=true';
 
 		if (function_exists('curl_init')) {
 			$data = $this->getContent($url);
@@ -377,11 +359,16 @@ class GoogleMapAPI
 			$data = file_get_contents($url);
 		}
 
-		$csvSplit = preg_split('/,/', $data);
-		$status = $csvSplit[0];
+		$response = json_decode($data, TRUE);
+		$status = $response['status'];
 
-		if (strcmp($status, '200') == 0) {
-			$return = $csvSplit; // successful geocode, $precision = $csvSplit[1],$lat = $csvSplit[2],$lng = $csvSplit[3];
+		if ($status == 'OK') {
+			$return = array(
+				$status,
+				$response['results'][0]['types'],
+				$response['results'][0]['geometry']['location']['lat'],
+				$response['results'][0]['geometry']['location']['lng']
+			); // successful geocode, $status-$precision-$lat-$lng
 		} else {
 			echo '<!-- geocoding : failure to geocode : ' . $status . " -->\n";
 			$return = NULL; // failure to geocode
@@ -673,7 +660,7 @@ class GoogleMapAPI
 		$this->content .= "\t\t" . 'if(infowindow) { infowindow.close(); }' . "\n";
 		$this->content .= "\t" . '}' . "\n";
 
-		// JS public function to hide/show a category of marker - TODO BUG
+		// JS public function to hide/show a category of marker
 		$this->content .= "\t" . 'function toggleHideShow(category) {' . "\n";
 		$this->content .= "\t\t" . 'for (var i=0; i<gmarkers.length; i++) {' . "\n";
 		$this->content .= "\t\t\t" . 'if (gmarkers[i].mycategory === category) {' . "\n";
