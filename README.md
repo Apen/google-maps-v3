@@ -6,7 +6,7 @@ Complete documentation of this extension is on this site http://www.ycerdan.fr/d
 
 ## Composer
 
-add in your composer.json
+Add in your composer.json
 
 ```
 {
