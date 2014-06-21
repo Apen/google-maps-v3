@@ -1,0 +1,7 @@
+{
+    "name": "Apen/google-maps-v3",
+    "description": "Simple PHP API to use Google Maps v3 service",
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
