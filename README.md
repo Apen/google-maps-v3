@@ -18,7 +18,6 @@ Add in your composer.json
     ],
     "require": {
         "php": ">=5.3.3",
-        "slim/slim": "2.4.3",
         "Apen/google-maps-v3":"v1"
     }
 }
